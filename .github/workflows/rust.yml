@@ -17,6 +17,8 @@ jobs:
     name: Audit Rust vulnerabilities
     runs-on: ubuntu-latest
     steps:
+    - name: setup libudev
+      run: sudo apt-get install libudev-dev
     - name: Checkout repository
       uses: actions/checkout@v1
     - name: rust-audit-check
@@ -34,6 +36,9 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
+    - name: Setup libudev
+      if: matrix.os == 'ubuntu-latest'
+      run: sudo apt-get install libudev-dev
     - name: Checkout repository
       uses: actions/checkout@v2
 

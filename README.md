@@ -15,3 +15,31 @@ Turn off power
 ```
 tty_relay off
 ```
+
+# Available options
+
+```
+tty_relay 0.1.0
+Maxim Zhukov <mussitantesmortem@gmail.com>
+tty power management
+
+USAGE:
+    tty_relay [OPTIONS] [SUBCOMMAND]
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+        --generate <shell>     [possible values: bash, elvish, fish, powershell, zsh]
+    -t, --tty <tty port>      manually select tty port
+
+SUBCOMMANDS:
+    help           Prints this message or the help of the given subcommand(s)
+    jog            quick toggle power
+    off            disable power
+    on             enable power
+    timed_start    start after n seconds
+    timed_stop     stop after n seconds
+    toggle         toggle power
+```

@@ -82,6 +82,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: setup libudev
+      run: sudo apt-get install libudev-dev
     - uses: actions/checkout@v2
     - uses: actions-rs/toolchain@v1
       with:

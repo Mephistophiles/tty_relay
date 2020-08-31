@@ -84,28 +84,30 @@ fn main() {
             .possible_values(&["bash", "elvish", "fish", "powershell", "zsh"])
     };
 
+    let tty_port_arg = || {
+        Arg::with_name("tty port")
+            .long("tty")
+            .short('t')
+            .about("manually select tty port")
+            .takes_value(true)
+            .validator(|s| {
+                let path = Path::new(s);
+
+                if path.exists() {
+                    Ok(())
+                } else {
+                    Err("Invalid path")
+                }
+            })
+    };
+
     let mut app = App::new(APPNAME)
         .about("tty power management")
         .author(crate_authors!())
         .setting(AppSettings::ColoredHelp)
         .setting(AppSettings::ArgRequiredElseHelp)
         .arg(generator_args())
-        .arg(
-            Arg::with_name("tty port")
-                .long("tty")
-                .short('t')
-                .about("manually select tty port")
-                .takes_value(true)
-                .validator(|s| {
-                    let path = Path::new(s);
-
-                    if path.exists() {
-                        Ok(())
-                    } else {
-                        Err("Invalid path")
-                    }
-                }),
-        )
+        .arg(tty_port_arg())
         .subcommand(App::new("on").about("enable power"))
         .subcommand(App::new("off").about("disable power"))
         .subcommand(App::new("toggle").about("toggle power"))

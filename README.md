@@ -6,6 +6,14 @@ TTY Power Management for DC 5V 1 Channel Time Delay Relay CH340 CH340G Smart Pro
 cargo install --git https://github.com/Mephistophiles/tty_relay
 ```
 
+# Connect via NC (Normal Closed) or NO (Normal Open)
+
+By default the tty_relay uses NO connector, but you can select NC via
+
+```shell
+cargo install --git https://github.com/Mephistophiles/tty_relay --no-default-features --features="nc-connected"
+```
+
 # Examples
 Turn on power
 ```

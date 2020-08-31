@@ -73,9 +73,15 @@ impl Port {
     }
 
     fn send_action(&mut self, action: Action) {
+        #[cfg(feature = "no-connected")]
         let enable = match action {
             Action::Connect => 0x01,
             Action::Disconnect => 0x00,
+        };
+        #[cfg(feature = "nc-connected")]
+        let enable = match action {
+            Action::Connect => 0x00,
+            Action::Disconnect => 0x01,
         };
         let toggle = &[0xF0, 0xA0, enable, 0x53];
         self.write(toggle);

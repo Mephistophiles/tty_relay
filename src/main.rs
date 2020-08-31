@@ -74,6 +74,14 @@ fn autocomplete(matches: &ArgMatches, mut app: &mut App) {
     }
 }
 
+fn is_number(val: &str) -> Result<(), String> {
+    let _: i32 = val
+        .parse()
+        .map_err(|e: std::num::ParseIntError| e.to_string())?;
+
+    Ok(())
+}
+
 fn main() {
     flexi_logger::Logger::with_env().start().unwrap();
 
@@ -105,7 +113,11 @@ fn main() {
         ($name:expr) => {
             App::new(concat!("timed_", $name))
                 .about(concat!($name, " after n seconds"))
-                .arg(Arg::with_name("seconds").required(true))
+                .arg(
+                    Arg::with_name("seconds")
+                        .required(true)
+                        .validator(is_number),
+                )
         };
     }
 

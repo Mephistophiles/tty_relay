@@ -101,6 +101,14 @@ fn main() {
             })
     };
 
+    macro_rules! timed_command {
+        ($name:expr) => {
+            App::new(concat!("timed_", $name))
+                .about(concat!($name, " after n seconds"))
+                .arg(Arg::with_name("seconds").required(true))
+        };
+    }
+
     let mut app = App::new(APPNAME)
         .about("tty power management")
         .author(crate_authors!())
@@ -112,16 +120,8 @@ fn main() {
         .subcommand(App::new("off").about("disable power"))
         .subcommand(App::new("toggle").about("toggle power"))
         .subcommand(App::new("jog").about("quick toggle power"))
-        .subcommand(
-            App::new("timed_start")
-                .about("start after n seconds")
-                .arg(Arg::with_name("seconds").required(true)),
-        )
-        .subcommand(
-            App::new("timed_stop")
-                .about("stop after n seconds")
-                .arg(Arg::with_name("seconds").required(true)),
-        )
+        .subcommand(timed_command!("start"))
+        .subcommand(timed_command!("stop"))
         .version(crate_version!());
 
     let matches = app.clone().get_matches();

@@ -104,7 +104,6 @@ impl Port {
         }
 
         let port = serialport::open(&path).ok()?;
-        let port = Box::leak(port);
 
         Some(Port {
             port: Box::new(port),

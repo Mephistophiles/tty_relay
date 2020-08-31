@@ -38,7 +38,7 @@ enum Action {
 
 impl Port {
     fn find_tty(vid: u16, pid: u16) -> Option<PathBuf> {
-        let ports = serialport::available_ports().unwrap();
+        let ports = serialport::available_ports().ok()?;
         for port in ports {
             if let UsbPort(usb_port) = port.port_type {
                 if usb_port.vid == vid && usb_port.pid == pid {

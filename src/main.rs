@@ -74,6 +74,14 @@ fn autocomplete(matches: &ArgMatches, mut app: &mut App) {
     }
 }
 
+fn is_number(val: &str) -> Result<(), String> {
+    let _: i32 = val
+        .parse()
+        .map_err(|e: std::num::ParseIntError| e.to_string())?;
+
+    Ok(())
+}
+
 fn main() {
     flexi_logger::Logger::with_env().start().unwrap();
 
@@ -84,42 +92,48 @@ fn main() {
             .possible_values(&["bash", "elvish", "fish", "powershell", "zsh"])
     };
 
+    let tty_port_arg = || {
+        Arg::with_name("tty port")
+            .long("tty")
+            .short('t')
+            .about("manually select tty port")
+            .takes_value(true)
+            .validator(|s| {
+                let path = Path::new(s);
+
+                if path.exists() {
+                    Ok(())
+                } else {
+                    Err("Invalid path")
+                }
+            })
+    };
+
+    macro_rules! timed_command {
+        ($name:expr) => {
+            App::new(concat!("timed_", $name))
+                .about(concat!($name, " after n seconds"))
+                .arg(
+                    Arg::with_name("seconds")
+                        .required(true)
+                        .validator(is_number),
+                )
+        };
+    }
+
     let mut app = App::new(APPNAME)
         .about("tty power management")
         .author(crate_authors!())
         .setting(AppSettings::ColoredHelp)
         .setting(AppSettings::ArgRequiredElseHelp)
         .arg(generator_args())
-        .arg(
-            Arg::with_name("tty port")
-                .long("tty")
-                .short('t')
-                .about("manually select tty port")
-                .takes_value(true)
-                .validator(|s| {
-                    let path = Path::new(s);
-
-                    if path.exists() {
-                        Ok(())
-                    } else {
-                        Err("Invalid path")
-                    }
-                }),
-        )
+        .arg(tty_port_arg())
         .subcommand(App::new("on").about("enable power"))
         .subcommand(App::new("off").about("disable power"))
         .subcommand(App::new("toggle").about("toggle power"))
         .subcommand(App::new("jog").about("quick toggle power"))
-        .subcommand(
-            App::new("timed_start")
-                .about("start after n seconds")
-                .arg(Arg::with_name("seconds").required(true)),
-        )
-        .subcommand(
-            App::new("timed_stop")
-                .about("stop after n seconds")
-                .arg(Arg::with_name("seconds").required(true)),
-        )
+        .subcommand(timed_command!("start"))
+        .subcommand(timed_command!("stop"))
         .version(crate_version!());
 
     let matches = app.clone().get_matches();

@@ -104,12 +104,17 @@ impl Port {
         let path;
 
         if let Some(p) = tty_path {
+            debug!("try to open serial port by path {}", p);
             path = PathBuf::from(p);
         } else {
+            debug!("try to find serial port with vid={} pid={}", Self::VID, Self::PID);
             path = Port::find_tty(Self::VID, Self::PID)?;
+            debug!("serial port found in path {}", path.display());
         }
 
         let port = serialport::open(&path).ok()?;
+
+        debug!("serial port was opened");
 
         Some(Port {
             port: Box::new(port),
@@ -119,36 +124,42 @@ impl Port {
 
     /// start immediately
     pub fn on(&mut self) {
+        debug!("on command");
         self.control_mode();
         self.send_connect();
     }
 
     /// stop immediately
     pub fn off(&mut self) {
+        debug!("off command");
         self.control_mode();
         self.send_disconnect();
     }
 
     /// start after n seconds
     pub fn timed_on(&mut self, timeout: u16) {
+        debug!("on after {} seconds", timeout);
         self.off();
         self.send_timer(timeout);
     }
 
     /// stop after n seconds
     pub fn timed_off(&mut self, timeout: u16) {
+        debug!("off after {} seconds", timeout);
         self.on();
         self.send_timer(timeout);
     }
 
     /// toggle power
     pub fn toggle(&mut self) {
+        debug!("toggle command");
         self.control_mode();
         self.send_timer(0);
     }
 
     /// quick toggle power
     pub fn jog(&mut self) {
+        debug!("jog command");
         self.jog_mode();
         self.send_connect();
     }

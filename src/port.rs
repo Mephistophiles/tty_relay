@@ -107,7 +107,11 @@ impl Port {
             debug!("try to open serial port by path {}", p);
             path = PathBuf::from(p);
         } else {
-            debug!("try to find serial port with vid={} pid={}", Self::VID, Self::PID);
+            debug!(
+                "try to find serial port with vid={} pid={}",
+                Self::VID,
+                Self::PID
+            );
             path = Port::find_tty(Self::VID, Self::PID)?;
             debug!("serial port found in path {}", path.display());
         }

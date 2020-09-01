@@ -2,5 +2,6 @@ status = [
     "Rust (ubuntu-latest)",
     "Rust (windows-latest)",
     "Rust (macos-latest)",
+    "Linters",
 ]
 delete_merged_branches = true

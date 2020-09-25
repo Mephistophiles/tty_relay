@@ -7,8 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = "3.0.0-beta.1"
-clap_generate = "3.0.0-beta.1"
+clap = "3.0.0-beta.2"
+clap_generate = "3.0.0-beta.2"
 serialport = "3.3.0"
 flexi_logger = "0.16"
 log = "0.4"

@@ -93,7 +93,7 @@ fn main() {
     };
 
     let tty_port_arg = || {
-        Arg::with_name("tty port")
+        Arg::new("tty port")
             .long("tty")
             .short('t')
             .about("manually select tty port")
@@ -113,11 +113,7 @@ fn main() {
         ($name:expr) => {
             App::new(concat!("timed_", $name))
                 .about(concat!($name, " after n seconds"))
-                .arg(
-                    Arg::with_name("seconds")
-                        .required(true)
-                        .validator(is_number),
-                )
+                .arg(Arg::new("seconds").required(true).validator(is_number))
         };
     }
 

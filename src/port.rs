@@ -18,7 +18,6 @@
 use log::debug;
 use serialport::SerialPortType::UsbPort;
 use std::io::{Read, Write};
-use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
 
@@ -28,7 +27,7 @@ impl<T> ReadWrite for T where T: Read + Write {}
 /// tty port wrapper
 pub struct Port {
     port: Box<dyn ReadWrite>,
-    path: PathBuf,
+    path: String,
 }
 
 enum Action {
@@ -37,12 +36,12 @@ enum Action {
 }
 
 impl Port {
-    fn find_tty(vid: u16, pid: u16) -> Option<PathBuf> {
+    fn find_tty(vid: u16, pid: u16) -> Option<String> {
         let ports = serialport::available_ports().ok()?;
         for port in ports {
             if let UsbPort(usb_port) = port.port_type {
                 if usb_port.vid == vid && usb_port.pid == pid {
-                    return Some(PathBuf::from(port.port_name));
+                    return Some(port.port_name);
                 }
             }
         }
@@ -51,7 +50,7 @@ impl Port {
     }
 
     fn write(&mut self, command: &[u8; 4]) {
-        debug!("{}: write {:02X?}", self.path.display(), command);
+        debug!("{}: write {:02X?}", self.path, command);
         self.port.write_all(command).unwrap();
         thread::sleep(Duration::from_millis(50));
     }
@@ -105,7 +104,7 @@ impl Port {
 
         if let Some(p) = tty_path {
             debug!("try to open serial port by path {}", p);
-            path = PathBuf::from(p);
+            path = p.to_string();
         } else {
             debug!(
                 "try to find serial port with vid={} pid={}",
@@ -113,10 +112,13 @@ impl Port {
                 Self::PID
             );
             path = Port::find_tty(Self::VID, Self::PID)?;
-            debug!("serial port found in path {}", path.display());
+            debug!("serial port found in path {}", path);
         }
 
-        let port = serialport::open(&path).ok()?;
+        let port = serialport::new(&path, 9600)
+            .timeout(Duration::from_millis(10))
+            .open()
+            .ok()?;
 
         debug!("serial port was opened");
 
@@ -180,7 +182,7 @@ mod tests {
         let port = Box::new(cursor);
         Port {
             port,
-            path: PathBuf::from("stub"),
+            path: "stub".to_string(),
         }
     }
 

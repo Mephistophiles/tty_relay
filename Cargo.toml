@@ -10,7 +10,7 @@ edition = "2018"
 clap = "3.0.0-beta.2"
 clap_generate = "3.0.0-beta.2"
 serialport = "4.0.0"
-flexi_logger = "0.16"
+flexi_logger = "0.18"
 log = "0.4"
 
 [features]

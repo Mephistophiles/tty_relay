@@ -83,7 +83,10 @@ fn is_number(val: &str) -> Result<(), String> {
 }
 
 fn main() {
-    flexi_logger::Logger::with_env().start().unwrap();
+    flexi_logger::Logger::try_with_env()
+        .unwrap()
+        .start()
+        .unwrap();
 
     let generator_args = || {
         Arg::new("generator")

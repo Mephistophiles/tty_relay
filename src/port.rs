@@ -15,6 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 /// power management via tty relay
+use anyhow::{Context, Result};
 use log::debug;
 use serialport::SerialPortType::UsbPort;
 use std::io::{Read, Write};
@@ -49,29 +50,30 @@ impl Port {
         None
     }
 
-    fn write(&mut self, command: &[u8; 4]) {
+    fn write(&mut self, command: &[u8; 4]) -> Result<()> {
         debug!("{}: write {:02X?}", self.path, command);
-        self.port.write_all(command).unwrap();
+        self.port.write_all(command)?;
         thread::sleep(Duration::from_millis(50));
+        Ok(())
     }
 
-    fn control_mode(&mut self) {
+    fn control_mode(&mut self) -> Result<()> {
         let control_mode = &[0xF0, 0xA0, 0x0C, 0x54];
-        self.write(control_mode);
+        self.write(control_mode)
     }
 
-    fn jog_mode(&mut self) {
+    fn jog_mode(&mut self) -> Result<()> {
         let jog_mode = &[0xF0, 0xA0, 0x0C, 0x55];
-        self.write(jog_mode);
+        self.write(jog_mode)
     }
 
-    fn send_timer(&mut self, timeout: u16) {
+    fn send_timer(&mut self, timeout: u16) -> Result<()> {
         let timeout = timeout.to_ne_bytes();
         let timer = &[0xF0, timeout[1], timeout[0], 0x57];
-        self.write(timer);
+        self.write(timer)
     }
 
-    fn send_action(&mut self, action: Action) {
+    fn send_action(&mut self, action: Action) -> Result<()> {
         #[cfg(feature = "no-connected")]
         let enable = match action {
             Action::Connect => 0x01,
@@ -83,15 +85,15 @@ impl Port {
             Action::Disconnect => 0x01,
         };
         let toggle = &[0xF0, 0xA0, enable, 0x53];
-        self.write(toggle);
+        self.write(toggle)
     }
 
-    fn send_disconnect(&mut self) {
-        self.send_action(Action::Disconnect);
+    fn send_disconnect(&mut self) -> Result<()> {
+        self.send_action(Action::Disconnect)
     }
 
-    fn send_connect(&mut self) {
-        self.send_action(Action::Connect);
+    fn send_connect(&mut self) -> Result<()> {
+        self.send_action(Action::Connect)
     }
 }
 
@@ -99,7 +101,7 @@ impl Port {
     const VID: u16 = 6790;
     const PID: u16 = 29987;
     /// open the tty port
-    pub fn open(tty_path: Option<&str>) -> Option<Port> {
+    pub fn open(tty_path: Option<&str>) -> Result<Port> {
         let path;
 
         if let Some(p) = tty_path {
@@ -111,63 +113,70 @@ impl Port {
                 Self::VID,
                 Self::PID
             );
-            path = Port::find_tty(Self::VID, Self::PID)?;
+            path = Port::find_tty(Self::VID, Self::PID).with_context(|| {
+                format!(
+                    "Compatible TTY devices is not found (with vid:pid {:04x}:{:04x})",
+                    Self::VID,
+                    Self::PID
+                )
+            })?;
             debug!("serial port found in path {}", path);
         }
 
         let port = serialport::new(&path, 9600)
             .timeout(Duration::from_millis(10))
             .open()
-            .ok()?;
+            .ok()
+            .with_context(|| format!("failed to open tty {}", path))?;
 
         debug!("serial port was opened");
 
-        Some(Port {
+        Ok(Port {
             port: Box::new(port),
             path,
         })
     }
 
     /// start immediately
-    pub fn on(&mut self) {
+    pub fn on(&mut self) -> Result<()> {
         debug!("on command");
-        self.control_mode();
-        self.send_connect();
+        self.control_mode()?;
+        self.send_connect()
     }
 
     /// stop immediately
-    pub fn off(&mut self) {
+    pub fn off(&mut self) -> Result<()> {
         debug!("off command");
-        self.control_mode();
-        self.send_disconnect();
+        self.control_mode()?;
+        self.send_disconnect()
     }
 
     /// start after n seconds
-    pub fn timed_on(&mut self, timeout: u16) {
+    pub fn timed_on(&mut self, timeout: u16) -> Result<()> {
         debug!("on after {} seconds", timeout);
-        self.off();
-        self.send_timer(timeout);
+        self.off()?;
+        self.send_timer(timeout)
     }
 
     /// stop after n seconds
-    pub fn timed_off(&mut self, timeout: u16) {
+    pub fn timed_off(&mut self, timeout: u16) -> Result<()> {
         debug!("off after {} seconds", timeout);
-        self.on();
-        self.send_timer(timeout);
+        self.on()?;
+        self.send_timer(timeout)
     }
 
     /// toggle power
-    pub fn toggle(&mut self) {
+    pub fn toggle(&mut self) -> Result<()> {
         debug!("toggle command");
-        self.control_mode();
-        self.send_timer(0);
+        self.control_mode()?;
+        self.send_timer(0)
     }
 
     /// quick toggle power
-    pub fn jog(&mut self) {
+    pub fn jog(&mut self) -> Result<()> {
         debug!("jog command");
-        self.jog_mode();
-        self.send_connect();
+        self.jog_mode()?;
+        self.send_connect()
     }
 }
 
@@ -195,7 +204,7 @@ mod tests {
     fn test_control_mode() {
         let mut port = create_stub_port();
 
-        port.control_mode();
+        port.control_mode().unwrap();
 
         assert_buf(port, &[0xF0, 0xA0, 0x0C, 0x54]);
     }
@@ -204,7 +213,7 @@ mod tests {
     fn test_jog_mode() {
         let mut port = create_stub_port();
 
-        port.jog_mode();
+        port.jog_mode().unwrap();
 
         assert_buf(port, &[0xF0, 0xA0, 0x0C, 0x55]);
     }
@@ -213,13 +222,13 @@ mod tests {
     fn test_timer() {
         let mut port = create_stub_port();
 
-        port.send_timer(0);
+        port.send_timer(0).unwrap();
 
         assert_buf(port, &[0xF0, 0x00, 0x00, 0x57]);
 
         let mut port = create_stub_port();
 
-        port.send_timer(u16::MAX);
+        port.send_timer(u16::MAX).unwrap();
 
         assert_buf(port, &[0xF0, 0xFF, 0xFF, 0x57]);
     }
@@ -228,7 +237,7 @@ mod tests {
     fn test_connect() {
         let mut port = create_stub_port();
 
-        port.send_connect();
+        port.send_connect().unwrap();
 
         assert_buf(port, &[0xF0, 0xA0, 0x01, 0x53]);
     }
@@ -237,7 +246,7 @@ mod tests {
     fn test_disconnect() {
         let mut port = create_stub_port();
 
-        port.send_disconnect();
+        port.send_disconnect().unwrap();
 
         assert_buf(port, &[0xF0, 0xA0, 0x00, 0x53]);
     }
@@ -246,7 +255,7 @@ mod tests {
     fn test_on() {
         let mut port = create_stub_port();
 
-        port.on();
+        port.on().unwrap();
 
         assert_buf(port, &[0xF0, 0xA0, 0x0C, 0x54, 0xF0, 0xA0, 0x01, 0x53]);
     }
@@ -255,7 +264,7 @@ mod tests {
     fn test_off() {
         let mut port = create_stub_port();
 
-        port.off();
+        port.off().unwrap();
 
         assert_buf(port, &[0xF0, 0xA0, 0x0C, 0x54, 0xF0, 0xA0, 0x00, 0x53]);
     }
@@ -264,7 +273,7 @@ mod tests {
     fn test_timed_on() {
         let mut port = create_stub_port();
 
-        port.timed_on(1);
+        port.timed_on(1).unwrap();
 
         assert_buf(
             port,
@@ -278,7 +287,7 @@ mod tests {
     fn test_timed_off() {
         let mut port = create_stub_port();
 
-        port.timed_off(1);
+        port.timed_off(1).unwrap();
 
         assert_buf(
             port,
@@ -292,7 +301,7 @@ mod tests {
     fn test_toggle() {
         let mut port = create_stub_port();
 
-        port.toggle();
+        port.toggle().unwrap();
 
         assert_buf(port, &[0xF0, 0xA0, 0x0C, 0x54, 0xF0, 0x00, 0x00, 0x57]);
     }
@@ -301,7 +310,7 @@ mod tests {
     fn test_jog() {
         let mut port = create_stub_port();
 
-        port.jog();
+        port.jog().unwrap();
 
         assert_buf(port, &[0xF0, 0xA0, 0x0C, 0x55, 0xF0, 0xA0, 0x01, 0x53]);
     }
@@ -310,7 +319,7 @@ mod tests {
     fn test_open() {
         let port = Port::open(Some("/dev/NOT_FOUND"));
 
-        assert!(port.is_none());
+        assert!(port.is_err());
     }
 
     #[test]

@@ -15,6 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 /// tty relay manager
+use anyhow::Result;
 use clap::{crate_authors, crate_version, App, AppSettings, Arg, ArgMatches};
 use clap_generate::generate;
 use clap_generate::generators::{Bash, Elvish, Fish, PowerShell, Zsh};
@@ -39,23 +40,25 @@ enum Command {
 }
 
 fn parse_command(matches: &ArgMatches) -> Command {
-    if matches.is_present("on") {
-        return Command::On;
-    } else if matches.is_present("off") {
-        return Command::Off;
-    } else if matches.is_present("toggle") {
-        return Command::Toggle;
-    } else if matches.is_present("jog") {
-        return Command::Jog;
+    let subcommand = matches.subcommand_name().unwrap();
+
+    if subcommand == "on" {
+        Command::On
+    } else if subcommand == "off" {
+        Command::Off
+    } else if subcommand == "toggle" {
+        Command::Toggle
+    } else if subcommand == "jog" {
+        Command::Jog
     } else if let Some(sub_matches) = matches.subcommand_matches("timed_start") {
         let seconds = sub_matches.value_of("seconds").unwrap().parse().unwrap();
-        return Command::TimedOn(seconds);
+        Command::TimedOn(seconds)
     } else if let Some(sub_matches) = matches.subcommand_matches("timed_stop") {
         let seconds = sub_matches.value_of("seconds").unwrap().parse().unwrap();
-        return Command::TimedOff(seconds);
+        Command::TimedOff(seconds)
+    } else {
+        Command::Unknown
     }
-
-    Command::Unknown
 }
 
 fn autocomplete(matches: &ArgMatches, mut app: &mut App) {
@@ -82,7 +85,7 @@ fn is_number(val: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn main() {
+fn main() -> Result<()> {
     flexi_logger::Logger::try_with_env()
         .unwrap()
         .start()
@@ -139,7 +142,7 @@ fn main() {
 
     autocomplete(&matches, &mut app);
 
-    let mut port = Port::open(matches.value_of("tty port")).unwrap();
+    let mut port = Port::open(matches.value_of("tty port"))?;
 
     match parse_command(&matches) {
         Command::On => port.on(),
@@ -148,6 +151,6 @@ fn main() {
         Command::Jog => port.jog(),
         Command::TimedOn(secs) => port.timed_on(secs),
         Command::TimedOff(secs) => port.timed_off(secs),
-        _ => todo!(),
+        _ => panic!("unknown command {:?}", matches),
     }
 }

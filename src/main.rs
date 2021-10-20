@@ -16,7 +16,7 @@
  */
 /// tty relay manager
 use anyhow::Result;
-use clap::{crate_authors, crate_version, App, AppSettings, Arg, ArgMatches};
+use clap::{crate_authors, crate_version, App, AppSettings, Arg, ArgMatches, ColorChoice};
 use clap_generate::generate;
 use clap_generate::generators::{Bash, Elvish, Fish, PowerShell, Zsh};
 use port::Port;
@@ -65,11 +65,11 @@ fn autocomplete(matches: &ArgMatches, mut app: &mut App) {
     if let Some(generator) = matches.value_of("generator") {
         eprintln!("Generating completion file for {}...", generator);
         match generator {
-            "bash" => generate::<Bash, _>(&mut app, APPNAME, &mut io::stdout()),
-            "elvish" => generate::<Elvish, _>(&mut app, APPNAME, &mut io::stdout()),
-            "fish" => generate::<Fish, _>(&mut app, APPNAME, &mut io::stdout()),
-            "powershell" => generate::<PowerShell, _>(&mut app, APPNAME, &mut io::stdout()),
-            "zsh" => generate::<Zsh, _>(&mut app, APPNAME, &mut io::stdout()),
+            "bash" => generate(Bash, &mut app, APPNAME, &mut io::stdout()),
+            "elvish" => generate(Elvish, &mut app, APPNAME, &mut io::stdout()),
+            "fish" => generate(Fish, &mut app, APPNAME, &mut io::stdout()),
+            "powershell" => generate(PowerShell, &mut app, APPNAME, &mut io::stdout()),
+            "zsh" => generate(Zsh, &mut app, APPNAME, &mut io::stdout()),
             _ => panic!("Unknown generator"),
         }
 
@@ -126,7 +126,7 @@ fn main() -> Result<()> {
     let mut app = App::new(APPNAME)
         .about("tty power management")
         .author(crate_authors!())
-        .setting(AppSettings::ColoredHelp)
+        .color(ColorChoice::Auto)
         .setting(AppSettings::ArgRequiredElseHelp)
         .arg(generator_args())
         .arg(tty_port_arg())

@@ -98,8 +98,9 @@ impl Port {
 }
 
 impl Port {
-    const VID: u16 = 6790;
-    const PID: u16 = 29987;
+    const VID: u16 = 0x1a86;
+    const PID: u16 = 0x7523;
+
     /// open the tty port
     pub fn open(tty_path: Option<&str>) -> Result<Port> {
         let path;

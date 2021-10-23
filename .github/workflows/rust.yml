@@ -13,18 +13,18 @@ env:
   CI: 1
 
 jobs:
-  rust-audit:
-    name: Audit Rust vulnerabilities
-    runs-on: ubuntu-latest
-    steps:
-    - name: setup libudev
-      run: sudo apt-get install libudev-dev
-    - name: Checkout repository
-      uses: actions/checkout@v1
-    - name: rust-audit-check
-      uses: actions-rs/audit-check@v1.2.0
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+  # rust-audit:
+  #   name: Audit Rust vulnerabilities
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: setup libudev
+  #     run: sudo apt-get install libudev-dev
+  #   - name: Checkout repository
+  #     uses: actions/checkout@v1
+  #   - name: rust-audit-check
+  #     uses: actions-rs/audit-check@v1.2.0
+  #     with:
+  #       token: ${{ secrets.GITHUB_TOKEN }}
 
   rust:
     name: Rust

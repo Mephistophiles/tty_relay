@@ -102,7 +102,7 @@ fn main() -> Result<()> {
         Arg::new("tty port")
             .long("tty")
             .short('t')
-            .about("manually select tty port")
+            .help("manually select tty port")
             .takes_value(true)
             .validator(|s| {
                 let path = Path::new(s);

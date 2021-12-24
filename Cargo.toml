@@ -7,7 +7,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.51"
+anyhow = "1.0.52"
 clap = { version = "3.0.0-rc.3", features = ["cargo"] }
 clap_generate = "3.0.0-rc.3"
 serialport = "4.0.1"

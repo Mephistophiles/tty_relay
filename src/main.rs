@@ -17,8 +17,10 @@
 /// tty relay manager
 use anyhow::Result;
 use clap::{crate_authors, crate_version, App, AppSettings, Arg, ArgMatches, ColorChoice};
-use clap_generate::generate;
-use clap_generate::generators::{Bash, Elvish, Fish, PowerShell, Zsh};
+use clap_complete::{
+    generate,
+    shells::{Bash, Elvish, Fish, PowerShell, Zsh},
+};
 use port::Port;
 use std::env;
 use std::io;
@@ -61,15 +63,15 @@ fn parse_command(matches: &ArgMatches) -> Command {
     }
 }
 
-fn autocomplete(matches: &ArgMatches, mut app: &mut App) {
+fn autocomplete(matches: &ArgMatches, app: &mut App) {
     if let Some(generator) = matches.value_of("generator") {
         eprintln!("Generating completion file for {}...", generator);
         match generator {
-            "bash" => generate(Bash, &mut app, APPNAME, &mut io::stdout()),
-            "elvish" => generate(Elvish, &mut app, APPNAME, &mut io::stdout()),
-            "fish" => generate(Fish, &mut app, APPNAME, &mut io::stdout()),
-            "powershell" => generate(PowerShell, &mut app, APPNAME, &mut io::stdout()),
-            "zsh" => generate(Zsh, &mut app, APPNAME, &mut io::stdout()),
+            "bash" => generate(Bash, app, APPNAME, &mut io::stdout()),
+            "elvish" => generate(Elvish, app, APPNAME, &mut io::stdout()),
+            "fish" => generate(Fish, app, APPNAME, &mut io::stdout()),
+            "powershell" => generate(PowerShell, app, APPNAME, &mut io::stdout()),
+            "zsh" => generate(Zsh, app, APPNAME, &mut io::stdout()),
             _ => panic!("Unknown generator"),
         }
 

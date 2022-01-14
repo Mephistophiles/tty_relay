@@ -50,26 +50,26 @@ impl Port {
         None
     }
 
-    fn write(&mut self, command: &[u8; 4]) -> Result<()> {
+    fn write(&mut self, command: [u8; 4]) -> Result<()> {
         debug!("{}: write {:02X?}", self.path, command);
-        self.port.write_all(command)?;
+        self.port.write_all(&command)?;
         thread::sleep(Duration::from_millis(50));
         Ok(())
     }
 
     fn control_mode(&mut self) -> Result<()> {
-        let control_mode = &[0xF0, 0xA0, 0x0C, 0x54];
+        let control_mode = [0xF0, 0xA0, 0x0C, 0x54];
         self.write(control_mode)
     }
 
     fn jog_mode(&mut self) -> Result<()> {
-        let jog_mode = &[0xF0, 0xA0, 0x0C, 0x55];
+        let jog_mode = [0xF0, 0xA0, 0x0C, 0x55];
         self.write(jog_mode)
     }
 
     fn send_timer(&mut self, timeout: u16) -> Result<()> {
         let timeout = timeout.to_ne_bytes();
-        let timer = &[0xF0, timeout[1], timeout[0], 0x57];
+        let timer = [0xF0, timeout[1], timeout[0], 0x57];
         self.write(timer)
     }
 
@@ -84,7 +84,7 @@ impl Port {
             Action::Connect => 0x00,
             Action::Disconnect => 0x01,
         };
-        let toggle = &[0xF0, 0xA0, enable, 0x53];
+        let toggle = [0xF0, 0xA0, enable, 0x53];
         self.write(toggle)
     }
 

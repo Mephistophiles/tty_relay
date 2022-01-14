@@ -153,6 +153,6 @@ fn main() -> Result<()> {
         Command::Jog => port.jog(),
         Command::TimedOn(secs) => port.timed_on(secs),
         Command::TimedOff(secs) => port.timed_off(secs),
-        _ => panic!("unknown command {:?}", matches),
+        Command::Unknown => panic!("unknown command {:?}", matches),
     }
 }

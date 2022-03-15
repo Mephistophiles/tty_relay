@@ -16,7 +16,7 @@
  */
 /// tty relay manager
 use anyhow::Result;
-use clap::{crate_authors, crate_version, App, AppSettings, Arg, ArgMatches, ColorChoice};
+use clap::{crate_authors, crate_version, Arg, ArgMatches, ColorChoice, Command};
 use clap_complete::{
     generate,
     shells::{Bash, Elvish, Fish, PowerShell, Zsh},
@@ -31,7 +31,7 @@ const APPNAME: &str = "tty_relay";
 
 mod port;
 
-enum Command {
+enum Cmd {
     On,
     Off,
     Toggle,
@@ -41,29 +41,29 @@ enum Command {
     Unknown,
 }
 
-fn parse_command(matches: &ArgMatches) -> Command {
+fn parse_command(matches: &ArgMatches) -> Cmd {
     let subcommand = matches.subcommand_name().unwrap();
 
     if subcommand == "on" {
-        Command::On
+        Cmd::On
     } else if subcommand == "off" {
-        Command::Off
+        Cmd::Off
     } else if subcommand == "toggle" {
-        Command::Toggle
+        Cmd::Toggle
     } else if subcommand == "jog" {
-        Command::Jog
+        Cmd::Jog
     } else if let Some(sub_matches) = matches.subcommand_matches("timed_start") {
         let seconds = sub_matches.value_of("seconds").unwrap().parse().unwrap();
-        Command::TimedOn(seconds)
+        Cmd::TimedOn(seconds)
     } else if let Some(sub_matches) = matches.subcommand_matches("timed_stop") {
         let seconds = sub_matches.value_of("seconds").unwrap().parse().unwrap();
-        Command::TimedOff(seconds)
+        Cmd::TimedOff(seconds)
     } else {
-        Command::Unknown
+        Cmd::Unknown
     }
 }
 
-fn autocomplete(matches: &ArgMatches, app: &mut App) {
+fn autocomplete(matches: &ArgMatches, app: &mut Command) {
     if let Some(generator) = matches.value_of("generator") {
         eprintln!("Generating completion file for {}...", generator);
         match generator {
@@ -119,23 +119,23 @@ fn main() -> Result<()> {
 
     macro_rules! timed_command {
         ($name:expr) => {
-            App::new(concat!("timed_", $name))
+            Command::new(concat!("timed_", $name))
                 .about(concat!($name, " after n seconds"))
                 .arg(Arg::new("seconds").required(true).validator(is_number))
         };
     }
 
-    let mut app = App::new(APPNAME)
+    let mut app = Command::new(APPNAME)
         .about("tty power management")
         .author(crate_authors!())
         .color(ColorChoice::Auto)
-        .setting(AppSettings::ArgRequiredElseHelp)
+        .arg_required_else_help(true)
         .arg(generator_args())
         .arg(tty_port_arg())
-        .subcommand(App::new("on").about("enable power"))
-        .subcommand(App::new("off").about("disable power"))
-        .subcommand(App::new("toggle").about("toggle power"))
-        .subcommand(App::new("jog").about("quick toggle power"))
+        .subcommand(Command::new("on").about("enable power"))
+        .subcommand(Command::new("off").about("disable power"))
+        .subcommand(Command::new("toggle").about("toggle power"))
+        .subcommand(Command::new("jog").about("quick toggle power"))
         .subcommand(timed_command!("start"))
         .subcommand(timed_command!("stop"))
         .version(crate_version!());
@@ -147,12 +147,12 @@ fn main() -> Result<()> {
     let mut port = Port::open(matches.value_of("tty port"))?;
 
     match parse_command(&matches) {
-        Command::On => port.on(),
-        Command::Off => port.off(),
-        Command::Toggle => port.toggle(),
-        Command::Jog => port.jog(),
-        Command::TimedOn(secs) => port.timed_on(secs),
-        Command::TimedOff(secs) => port.timed_off(secs),
-        Command::Unknown => panic!("unknown command {:?}", matches),
+        Cmd::On => port.on(),
+        Cmd::Off => port.off(),
+        Cmd::Toggle => port.toggle(),
+        Cmd::Jog => port.jog(),
+        Cmd::TimedOn(secs) => port.timed_on(secs),
+        Cmd::TimedOff(secs) => port.timed_off(secs),
+        Cmd::Unknown => panic!("unknown command {:?}", matches),
     }
 }

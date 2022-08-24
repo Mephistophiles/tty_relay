@@ -176,6 +176,13 @@ impl Port {
     /// quick toggle power
     pub fn jog(&mut self) -> Result<()> {
         debug!("jog command");
+        self.jog_mode()?;
+        self.send_connect()
+    }
+
+    /// software restart
+    pub fn restart(&mut self) -> Result<()> {
+        debug!("restart command");
         self.off()?;
         std::thread::sleep(Duration::from_secs(1));
         self.on()
@@ -313,6 +320,15 @@ mod tests {
         let mut port = create_stub_port();
 
         port.jog().unwrap();
+
+        assert_buf(port, &[0xF0, 0xA0, 0x0C, 0x55, 0xF0, 0xA0, 0x01, 0x53]);
+    }
+
+    #[test]
+    fn test_restart() {
+        let mut port = create_stub_port();
+
+        port.restart().unwrap();
 
         assert_buf(
             port,

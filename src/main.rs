@@ -36,6 +36,7 @@ enum Cmd {
     Off,
     Toggle,
     Jog,
+    Restart,
     TimedOn(u16),
     TimedOff(u16),
     Unknown,
@@ -52,6 +53,8 @@ fn parse_command(matches: &ArgMatches) -> Cmd {
         Cmd::Toggle
     } else if subcommand == "jog" {
         Cmd::Jog
+    } else if subcommand == "restart" {
+        Cmd::Restart
     } else if let Some(sub_matches) = matches.subcommand_matches("timed_start") {
         let seconds = sub_matches.value_of("seconds").unwrap().parse().unwrap();
         Cmd::TimedOn(seconds)
@@ -136,6 +139,7 @@ fn main() -> Result<()> {
         .subcommand(Command::new("off").about("disable power"))
         .subcommand(Command::new("toggle").about("toggle power"))
         .subcommand(Command::new("jog").about("quick toggle power"))
+        .subcommand(Command::new("restart").about("software restart"))
         .subcommand(timed_command!("start"))
         .subcommand(timed_command!("stop"))
         .version(crate_version!());
@@ -151,6 +155,7 @@ fn main() -> Result<()> {
         Cmd::Off => port.off(),
         Cmd::Toggle => port.toggle(),
         Cmd::Jog => port.jog(),
+        Cmd::Restart => port.restart(),
         Cmd::TimedOn(secs) => port.timed_on(secs),
         Cmd::TimedOff(secs) => port.timed_off(secs),
         Cmd::Unknown => panic!("unknown command {:?}", matches),

@@ -176,8 +176,9 @@ impl Port {
     /// quick toggle power
     pub fn jog(&mut self) -> Result<()> {
         debug!("jog command");
-        self.jog_mode()?;
-        self.send_connect()
+        self.off()?;
+        std::thread::sleep(Duration::from_secs(1));
+        self.on()
     }
 }
 
@@ -313,7 +314,13 @@ mod tests {
 
         port.jog().unwrap();
 
-        assert_buf(port, &[0xF0, 0xA0, 0x0C, 0x55, 0xF0, 0xA0, 0x01, 0x53]);
+        assert_buf(
+            port,
+            &[
+                0xF0, 0xA0, 0x0C, 0x54, 0xF0, 0xA0, 0x00, 0x53, 0xF0, 0xA0, 0x0C, 0x54, 0xF0, 0xA0,
+                0x01, 0x53,
+            ],
+        );
     }
 
     #[test]
